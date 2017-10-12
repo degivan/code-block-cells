@@ -7,7 +7,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -43,36 +42,31 @@ public class PyExecuteCellAction extends AnAction {
         PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
         if (editor != null) {
             final String cellText = getCellText(editor, file);
-            if (cellText != null) {
-                showConsoleAndExecuteCode(e, cellText);
-            } else {
-                //TODO: if no cell around
-            }
+            showConsoleAndExecuteCode(e, cellText);
         }
     }
 
     /**
      * Finds existing or creates a new console and then executes provided code there.
      *
-     * @param e
-     * @param selectionText null means that there is no code to execute, only open a console
+     * @param e event
+     * @param cellText null means that there is no code to execute, only open a console
      */
-    public static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @Nullable final String selectionText) {
+    private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String cellText) {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         Project project = e.getProject();
-        Module module = e.getData(LangDataKeys.MODULE);
 
-        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, selectionText, editor), editor, project, module);
+        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, cellText, editor), editor, project);
     }
 
-    @Nullable
+    @NotNull
     private static String getCellText(@NotNull Editor editor, PsiFile file) {
         PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
         element = getCellStart(element);
         return getCodeInCell(element);
     }
 
-    @Nullable
+    @NotNull
     private static PsiElement getCellStart(PsiElement element) {
         while (!(element.getParent() == null || element.getParent() instanceof PsiFile)) {
             element = element.getParent();
@@ -109,12 +103,7 @@ public class PyExecuteCellAction extends AnAction {
         boolean enabled = false;
         if (editor != null && isPython(editor)) {
             String text = getCellText(editor, file);
-            if (text != null) {
-                presentation.setText(EXECUTE_CELL_IN_CONSOLE);
-            } else {
-                //TODO: if no cell around
-            }
-
+            presentation.setText(EXECUTE_CELL_IN_CONSOLE);
             enabled = !StringUtil.isEmpty(text);
         }
 
@@ -199,20 +188,18 @@ public class PyExecuteCellAction extends AnAction {
     private static void findCodeExecutor(@NotNull AnActionEvent e,
                                          @NotNull Consumer<PyCodeExecutor> consumer,
                                          @Nullable Editor editor,
-                                         @Nullable Project project,
-                                         @Nullable Module module) {
+                                         @Nullable Project project) {
         if (project != null) {
             if (canFindConsole(e)) {
                 selectConsole(e.getDataContext(), project, consumer, editor);
             } else {
-                startConsole(project, consumer, module);
+                startConsole(project, consumer);
             }
         }
     }
 
     private static void startConsole(final Project project,
-                                     final Consumer<PyCodeExecutor> consumer,
-                                     Module context) {
+                                     final Consumer<PyCodeExecutor> consumer) {
         final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
         if (toolWindow != null && toolWindow.getConsoleContentDescriptors().size() > 0) {
@@ -249,7 +236,7 @@ public class PyExecuteCellAction extends AnAction {
         }
     }
 
-    private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @Nullable String text, Editor editor) {
+    private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text, Editor editor) {
         codeExecutor.executeCode(text, editor);
     }
 }
