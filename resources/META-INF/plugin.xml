@@ -25,6 +25,14 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.degtiarenko.plugin.BlockCellLineProvider"/>
   </extensions>
 
+  <actions>
+    <action id="PyExecuteCellAction"
+            class="com.degtiarenko.plugin.PyExecuteCellAction"
+            text="Execute Cell in console"
+            description="Executes selected cell in Python/Django console">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
+    </action>
+  </actions>
   <application-components>
 
   </application-components>
