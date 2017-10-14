@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,7 +30,6 @@ import java.util.List;
 public class PyExecuteCellAction extends AnAction {
 
     private static final String EXECUTE_CELL_IN_CONSOLE = "Execute Cell in Console";
-    private static final String BLOCK_CELL_SEPARATOR = "#%%";
 
     public PyExecuteCellAction() {
         super(EXECUTE_CELL_IN_CONSOLE);
@@ -62,37 +60,8 @@ public class PyExecuteCellAction extends AnAction {
     @NotNull
     private static String getCellText(@NotNull Editor editor, PsiFile file) {
         PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-        element = getCellStart(element);
-        return getCodeInCell(element);
-    }
-
-    @NotNull
-    private static PsiElement getCellStart(PsiElement element) {
-        while (!(element.getParent() == null || element.getParent() instanceof PsiFile)) {
-            element = element.getParent();
-        }
-        while (!(element instanceof PsiComment && element.getText().equals(BLOCK_CELL_SEPARATOR))) {
-            PsiElement prev = element.getPrevSibling();
-            if (prev == null) {
-                break;
-            }
-            element = prev;
-        }
-        return element;
-    }
-
-    @NotNull
-    private static String getCodeInCell(PsiElement element) {
-        StringBuilder text = new StringBuilder();
-        while (true) {
-            element = element.getNextSibling();
-            if (element != null && !element.getText().equals(BLOCK_CELL_SEPARATOR)) {
-                text.append(element.getText());
-            } else {
-                break;
-            }
-        }
-        return text.toString();
+        element = CellUtil.getCellStart(element);
+        return CellUtil.getCodeInCell(element);
     }
 
     public void update(AnActionEvent e) {

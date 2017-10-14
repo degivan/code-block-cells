@@ -16,8 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
+import static com.degtiarenko.plugin.CellUtil.BLOCK_CELL_SEPARATOR;
+
 public class BlockCellLineProvider implements LineMarkerProvider {
-    private static final String BLOCK_CELL_SEPARATOR = "#%%";
     private EditorColorsManager colorsManager = EditorColorsManager.getInstance();
 
     @Nullable
