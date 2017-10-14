@@ -35,9 +35,7 @@ public class BlockCellLineProvider implements LineMarkerProvider {
 
     @Override
     public void collectSlowLineMarkers(@NotNull List<PsiElement> list, @NotNull Collection<LineMarkerInfo> collection) {
-        for (PsiElement psiElement : list) {
-            collection.add(getLineMarkerInfo(psiElement));
-        }
+
     }
 
     private boolean isBlockCellComment(PsiComment comment) {
