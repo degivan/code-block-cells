@@ -60,8 +60,11 @@ public class PyExecuteCellAction extends AnAction {
     @NotNull
     private static String getCellText(@NotNull Editor editor, PsiFile file) {
         PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-        element = CellUtil.getCellStart(element);
-        return CellUtil.getCodeInCell(element);
+        if (element != null) {
+            element = CellUtil.getCellStart(element);
+            return CellUtil.getCodeInCell(element);
+        }
+        return "";
     }
 
     public void update(AnActionEvent e) {
