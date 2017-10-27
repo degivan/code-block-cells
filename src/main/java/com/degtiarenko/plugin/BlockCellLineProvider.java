@@ -3,6 +3,7 @@ package com.degtiarenko.plugin;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +25,10 @@ public class BlockCellLineProvider implements LineMarkerProvider {
 
     @Nullable
     @Override
-    public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement psiElement) {
-        if (psiElement instanceof PsiComment) {
-            PsiComment comment = (PsiComment) psiElement;
-            if (isBlockCellComment(comment)) {
-                return createBlockCellLineMarker(comment, colorsManager);
-            }
+    public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+        if ((element instanceof PsiComment && isBlockCellComment((PsiComment) element))
+                || (element.getPrevSibling() == null && element.getParent() instanceof PyFile)) {
+            return createBlockCellLineMarker(element, colorsManager);
         }
         return null;
     }
@@ -44,12 +44,12 @@ public class BlockCellLineProvider implements LineMarkerProvider {
 
     // почти полностью скопирован с LineMarkerPass#createMethodSeparatorLineMarker
     @NotNull
-    private static LineMarkerInfo<PsiComment> createBlockCellLineMarker(@NotNull PsiComment comment,
+    private static LineMarkerInfo<PsiElement> createBlockCellLineMarker(@NotNull PsiElement element,
                                                                         @NotNull EditorColorsManager colorsManager) {
-        LineMarkerInfo<PsiComment> info = new LineMarkerInfo<>(
-                comment,
-                comment.getTextRange(),
-                null,
+        LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(
+                element,
+                element.getTextRange(),
+                AllIcons.General.Run,
                 Pass.LINE_MARKERS,
                 null,
                 null,
