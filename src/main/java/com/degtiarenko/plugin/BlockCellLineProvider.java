@@ -77,7 +77,9 @@ public class BlockCellLineProvider implements LineMarkerProvider {
                             @Override
                             public void actionPerformed(AnActionEvent e) {
                                 Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-                                editor.getCaretModel().moveToOffset(element.getTextOffset());
+                                if (editor != null) {
+                                    editor.getCaretModel().moveToOffset(element.getTextOffset());
+                                }
                                 action.actionPerformed(e);
                             }
                         };
