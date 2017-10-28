@@ -3,7 +3,7 @@ package com.degtiarenko.plugin;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ public class CellUtil {
     @Nullable
     public static PsiElement getCellStart(@NotNull PsiElement element) {
         PsiElement prev = Optional.ofNullable(PsiTreeUtil.findFirstParent(element,
-                elem -> elem.getParent() instanceof PyFile)).orElse(element);
+                PyUtil::isTopLevel)).orElse(element);
         while (!(prev.getText().equals(BLOCK_CELL_SEPARATOR))) {
             prev = PsiTreeUtil.getPrevSiblingOfType(element, PsiComment.class);
             if (prev == null) {

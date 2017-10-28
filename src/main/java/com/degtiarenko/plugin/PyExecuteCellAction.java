@@ -30,15 +30,16 @@ import java.util.List;
 public class PyExecuteCellAction extends AnAction {
 
     private static final String EXECUTE_CELL_IN_CONSOLE = "Execute Cell in Console";
+    private static final String DESCRIPTION = "Executes selected cell in Python/Django console";
 
     public PyExecuteCellAction() {
-        super(EXECUTE_CELL_IN_CONSOLE);
+        super(EXECUTE_CELL_IN_CONSOLE, DESCRIPTION, null);
     }
 
     public void actionPerformed(AnActionEvent e) {
         Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-        if (editor != null) {
+        if (editor != null && file != null) {
             final String cellText = getCellText(editor, file);
             showConsoleAndExecuteCode(e, cellText);
         }
@@ -47,7 +48,7 @@ public class PyExecuteCellAction extends AnAction {
     /**
      * Finds existing or creates a new console and then executes provided code there.
      *
-     * @param e event
+     * @param e        event
      * @param cellText null means that there is no code to execute, only open a console
      */
     private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String cellText) {
@@ -58,7 +59,7 @@ public class PyExecuteCellAction extends AnAction {
     }
 
     @NotNull
-    private static String getCellText(@NotNull Editor editor, PsiFile file) {
+    private static String getCellText(@NotNull Editor editor, @NotNull PsiFile file) {
         PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
         if (element != null) {
             element = CellUtil.getCellStart(element);
@@ -73,14 +74,12 @@ public class PyExecuteCellAction extends AnAction {
         Presentation presentation = e.getPresentation();
 
         boolean enabled = false;
-        if (editor != null && isPython(editor)) {
+        if (editor != null && file != null && isPython(editor)) {
             String text = getCellText(editor, file);
-            presentation.setText(EXECUTE_CELL_IN_CONSOLE);
             enabled = !StringUtil.isEmpty(text);
         }
 
-        presentation.setEnabled(enabled);
-        presentation.setVisible(enabled);
+        presentation.setEnabledAndVisible(enabled);
     }
 
     private static boolean isPython(Editor editor) {

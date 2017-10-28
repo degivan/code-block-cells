@@ -27,9 +27,7 @@
 
   <actions>
     <action id="PyExecuteCellAction"
-            class="com.degtiarenko.plugin.PyExecuteCellAction"
-            text="Execute Cell in console"
-            description="Executes selected cell in Python/Django console">
+            class="com.degtiarenko.plugin.PyExecuteCellAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
     </action>
   </actions>
