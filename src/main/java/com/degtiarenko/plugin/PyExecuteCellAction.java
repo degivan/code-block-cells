@@ -39,7 +39,7 @@ public class PyExecuteCellAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-        if (editor != null && file != null) {
+        if (editor != null && file != null && CellUtil.isFileOfGoodType(file)) {
             final String cellText = getCellText(editor, file);
             showConsoleAndExecuteCode(e, cellText);
         }

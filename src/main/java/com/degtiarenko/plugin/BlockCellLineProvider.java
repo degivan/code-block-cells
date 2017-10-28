@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.degtiarenko.plugin.CellUtil.BLOCK_CELL_SEPARATOR;
+import static com.degtiarenko.plugin.CellUtil.isFileOfGoodType;
 
 public class BlockCellLineProvider implements LineMarkerProvider {
     private static final String CELL_ACTION_ID = "PyExecuteCellAction";
@@ -33,9 +34,11 @@ public class BlockCellLineProvider implements LineMarkerProvider {
     @Nullable
     @Override
     public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-        if ((element instanceof PsiComment && isBlockCellComment((PsiComment) element))
-                || (element.getPrevSibling() == null && element.getParent() instanceof PyFile)) {
-            return createBlockCellLineMarker(element, colorsManager);
+        if(isFileOfGoodType(element.getContainingFile())) {
+            if ((element instanceof PsiComment && isBlockCellComment((PsiComment) element))
+                    || (element.getPrevSibling() == null && element.getParent() instanceof PyFile)) {
+                return createBlockCellLineMarker(element, colorsManager);
+            }
         }
         return null;
     }
