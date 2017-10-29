@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public class CellUtil {
     private static final String CCPY_EXT = ".ccpy";
-    public static final String BLOCK_CELL_SEPARATOR = "#%%";
+    public static final String BLOCK_CELL_SEPARATOR = "# %%";
 
     @Nullable
     public static PsiElement getCellStart(@NotNull PsiElement element) {
