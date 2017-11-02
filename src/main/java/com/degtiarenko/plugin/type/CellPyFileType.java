@@ -25,6 +25,6 @@ public class CellPyFileType extends PythonFileType {
     @NotNull
     @Override
     public String getDefaultExtension() {
-        return "pycc";
+        return "ccpy";
     }
 }

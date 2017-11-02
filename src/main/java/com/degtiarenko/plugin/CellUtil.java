@@ -7,15 +7,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-
 public class CellUtil {
     public static final String BLOCK_CELL_SEPARATOR = "# %%";
-    private static final String ccpyExtension = CellPyFileType.INSTANCE.getDefaultExtension();
+    private static final String fileExtension = CellPyFileType.INSTANCE.getDefaultExtension();
 
     @Nullable
     public static PsiElement getCellStart(@NotNull PsiElement element) {
@@ -44,6 +41,6 @@ public class CellUtil {
     }
 
     public static boolean isFileOfGoodType(@NotNull PsiFile file) {
-        return file.getName().endsWith(ccpyExtension);
+        return file.getName().endsWith(fileExtension);
     }
 }
