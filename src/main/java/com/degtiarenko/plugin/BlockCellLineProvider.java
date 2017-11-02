@@ -35,12 +35,15 @@ public class BlockCellLineProvider implements LineMarkerProvider {
     @Override
     public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
         if(isFileOfGoodType(element.getContainingFile())) {
-            if ((element instanceof PsiComment && isBlockCellComment((PsiComment) element))
-                    || (element.getPrevSibling() == null && element.getParent() instanceof PyFile)) {
+            if (isBlockCellComment(element) || isBeginningOfFile(element)) {
                 return createBlockCellLineMarker(element, colorsManager);
             }
         }
         return null;
+    }
+
+    private boolean isBeginningOfFile(@NotNull PsiElement element) {
+        return element.getPrevSibling() == null && element.getParent() instanceof PyFile;
     }
 
     @Override
@@ -48,8 +51,8 @@ public class BlockCellLineProvider implements LineMarkerProvider {
 
     }
 
-    private boolean isBlockCellComment(PsiComment comment) {
-        return comment.getText().equals(BLOCK_CELL_SEPARATOR);
+    private boolean isBlockCellComment(PsiElement comment) {
+        return (comment instanceof PsiComment) && (comment.getText().equals(BLOCK_CELL_SEPARATOR));
     }
 
     @NotNull
