@@ -1,5 +1,6 @@
-package com.degtiarenko.plugin;
+package com.degtiarenko.plugin.actions;
 
+import com.degtiarenko.plugin.CellUtil;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.process.ProcessHandler;

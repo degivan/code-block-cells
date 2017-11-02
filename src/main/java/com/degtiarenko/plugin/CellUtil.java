@@ -1,5 +1,6 @@
 package com.degtiarenko.plugin;
 
+import com.degtiarenko.plugin.type.CellPyFileType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class CellUtil {
-    private static final String CCPY_EXT = ".ccpy";
     public static final String BLOCK_CELL_SEPARATOR = "# %%";
+    private static final String ccpyExtension = CellPyFileType.INSTANCE.getDefaultExtension();
 
     @Nullable
     public static PsiElement getCellStart(@NotNull PsiElement element) {
@@ -45,6 +46,6 @@ public class CellUtil {
     }
 
     public static boolean isFileOfGoodType(@NotNull PsiFile file) {
-            return file.getName().endsWith(CCPY_EXT);
+            return file.getName().endsWith(ccpyExtension);
     }
 }

@@ -23,12 +23,16 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.degtiarenko.plugin.BlockCellLineProvider"/>
+    <fileTypeFactory implementation="com.degtiarenko.plugin.type.CellFileTypeFactory"/>
   </extensions>
 
   <actions>
     <action id="PyExecuteCellAction"
-            class="com.degtiarenko.plugin.PyExecuteCellAction">
+            class="com.degtiarenko.plugin.actions.PyExecuteCellAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
+    </action>
+    <action id="NewCellFile" class="com.degtiarenko.plugin.actions.CreateCcpyFileAction">
+      <add-to-group group-id="NewGroup"/>
     </action>
   </actions>
   <application-components>
