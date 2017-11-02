@@ -9,7 +9,8 @@ import com.intellij.psi.PsiDirectory;
 
 public class CreateCcpyFileAction extends CreateFileFromTemplateAction implements DumbAware {
     public CreateCcpyFileAction() {
-        super("Python with cells", "Creates an Python file with cells", null);
+        super("Python with cells", "Creates an Python file with cells",
+                CellPyFileType.INSTANCE.getIcon());
     }
 
     @Override
