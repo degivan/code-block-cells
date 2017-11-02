@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ public class CellUtil {
     @Nullable
     public static PsiElement getCellStart(@NotNull PsiElement element) {
         PsiElement topLevelComponent = ObjectUtils.notNull(PsiTreeUtil.findFirstParent(element,
-                PyUtil::isTopLevel), element);
+                elem -> elem.getParent() instanceof PyFile), element);
         while (!(topLevelComponent.getText().equals(BLOCK_CELL_SEPARATOR))) {
             topLevelComponent = PsiTreeUtil.getPrevSiblingOfType(topLevelComponent, PsiComment.class);
             if (topLevelComponent == null) {

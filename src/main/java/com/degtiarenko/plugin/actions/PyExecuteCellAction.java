@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.*;
@@ -61,7 +62,9 @@ public class PyExecuteCellAction extends AnAction {
 
     @NotNull
     private static String getCellText(@NotNull Editor editor, @NotNull PsiFile file) {
-        PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement element = file.findElementAt(offset);
+        element = ObjectUtils.chooseNotNull(element, file.findElementAt(offset - 1));
         if (element != null) {
             element = CellUtil.getCellStart(element);
             return CellUtil.getCodeInCell(element);
