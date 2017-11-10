@@ -1,6 +1,5 @@
-package com.degtiarenko.plugin.actions;
+package com.degtiarenko.plugin.execution;
 
-import com.degtiarenko.plugin.CellReferenceResolver;
 import com.degtiarenko.plugin.CellUtil;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
@@ -96,7 +95,7 @@ public class PyExecuteCellAction extends AnAction {
         Presentation presentation = e.getPresentation();
 
         boolean enabled = false;
-        if (editor != null && file != null && isPython(editor)) {
+        if (editor != null && file != null && isPython(editor) && CellUtil.isFileOfGoodType(file)) {
             PsiElement element = getCaretElement(editor, file);
             String text = getCellText(element);
             enabled = !StringUtil.isEmpty(text);

@@ -1,5 +1,6 @@
-package com.degtiarenko.plugin;
+package com.degtiarenko.plugin.execution;
 
+import com.degtiarenko.plugin.CellUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;

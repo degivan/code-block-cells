@@ -1,4 +1,4 @@
-package com.degtiarenko.plugin.actions;
+package com.degtiarenko.plugin.type;
 
 import com.degtiarenko.plugin.type.CellPyFileType;
 import com.intellij.ide.actions.CreateFileFromTemplateAction;

@@ -25,7 +25,7 @@ import java.util.List;
 import static com.degtiarenko.plugin.CellUtil.BLOCK_CELL_SEPARATOR;
 import static com.degtiarenko.plugin.CellUtil.isFileOfGoodType;
 
-public class BlockCellLineProvider implements LineMarkerProvider {
+public class CellLineProvider implements LineMarkerProvider {
     private static final String CELL_ACTION_ID = "PyExecuteCellAction";
 
     private EditorColorsManager colorsManager = EditorColorsManager.getInstance();

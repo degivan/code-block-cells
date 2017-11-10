@@ -22,16 +22,16 @@
   <depends>com.intellij.modules.lang</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.degtiarenko.plugin.BlockCellLineProvider"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.degtiarenko.plugin.CellLineProvider"/>
     <fileTypeFactory implementation="com.degtiarenko.plugin.type.CellFileTypeFactory"/>
   </extensions>
 
   <actions>
     <action id="PyExecuteCellAction"
-            class="com.degtiarenko.plugin.actions.PyExecuteCellAction">
+            class="com.degtiarenko.plugin.execution.PyExecuteCellAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
     </action>
-    <action id="NewCellFile" class="com.degtiarenko.plugin.actions.CreateCcpyFileAction">
+    <action id="NewCellFile" class="com.degtiarenko.plugin.type.CreateCcpyFileAction">
       <add-to-group group-id="NewGroup"/>
     </action>
   </actions>
