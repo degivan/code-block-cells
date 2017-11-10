@@ -63,7 +63,7 @@ public class CellReferenceResolver {
     }
 
     @NotNull
-    public static List<PyReferenceExpression> getReferencesInCell(@Nullable PsiElement element) {
+    private static List<PyReferenceExpression> getReferencesInCell(@Nullable PsiElement element) {
         List<PyReferenceExpression> references = new ArrayList<>();
         while (element != null && !element.getText().equals(BLOCK_CELL_SEPARATOR)) {
             if (element instanceof PyReferenceExpression) {

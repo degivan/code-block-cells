@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public class CellPyFileType extends PythonFileType {
     public static final PythonFileType INSTANCE = new CellPyFileType();
 
-    protected CellPyFileType() {
+    private CellPyFileType() {
         super();
     }
 

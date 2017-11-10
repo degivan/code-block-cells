@@ -12,17 +12,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class CellUtil {
     public static final String BLOCK_CELL_SEPARATOR = "# %%";
-    private static final String fileExtension = CellPyFileType.INSTANCE.getDefaultExtension();
+    private static final String FILE_EXTENSION = CellPyFileType.INSTANCE.getDefaultExtension();
 
     @Nullable
     public static PsiElement getCellStart(@NotNull PsiElement element) {
         PsiElement topLevelComponent = ObjectUtils.notNull(PsiTreeUtil.findFirstParent(element,
                 elem -> elem.getParent() instanceof PyFile), element);
-        while (!(topLevelComponent.getText().equals(BLOCK_CELL_SEPARATOR))) {
+        while (topLevelComponent != null && !(topLevelComponent.getText().equals(BLOCK_CELL_SEPARATOR))) {
             topLevelComponent = PsiTreeUtil.getPrevSiblingOfType(topLevelComponent, PsiComment.class);
-            if (topLevelComponent == null) {
-                break;
-            }
         }
         if (topLevelComponent == null) {
             return element.getContainingFile().getFirstChild();
@@ -41,6 +38,6 @@ public class CellUtil {
     }
 
     public static boolean isFileOfGoodType(@NotNull PsiFile file) {
-        return file.getName().endsWith(fileExtension);
+        return file.getName().endsWith(FILE_EXTENSION);
     }
 }

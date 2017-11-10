@@ -8,16 +8,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 
 public class CreateCcpyFileAction extends CreateFileFromTemplateAction implements DumbAware {
+
+    private static final String PYTHON_WITH_CELLS = "Python File with cells";
+    private static final String TEMPLATE_NAME = "Cell Python";
+
     public CreateCcpyFileAction() {
-        super("Python with cells", "Creates an Python file with cells",
+        super(PYTHON_WITH_CELLS, "Creates a Python file with cells",
                 CellPyFileType.INSTANCE.getIcon());
     }
 
     @Override
     protected void buildDialog(Project project, PsiDirectory psiDirectory, CreateFileFromTemplateDialog.Builder builder) {
         builder
-            .setTitle("Python with cells")
-            .addKind("Cell Python", CellPyFileType.INSTANCE.getIcon(), "Cell Python");
+            .setTitle(PYTHON_WITH_CELLS)
+            .addKind(CellPyFileType.INSTANCE.getName(), CellPyFileType.INSTANCE.getIcon(), TEMPLATE_NAME);
     }
 
     @Override
