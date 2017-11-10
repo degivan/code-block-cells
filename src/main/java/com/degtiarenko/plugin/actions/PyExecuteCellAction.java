@@ -1,5 +1,6 @@
 package com.degtiarenko.plugin.actions;
 
+import com.degtiarenko.plugin.CellReferenceResolver;
 import com.degtiarenko.plugin.CellUtil;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
@@ -23,6 +24,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +44,21 @@ public class PyExecuteCellAction extends AnAction {
         Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
         if (editor != null && file != null && CellUtil.isFileOfGoodType(file)) {
-            final String cellText = getCellText(editor, file);
+            PsiElement element = getCaretElement(editor, file);
+            final String cellText = getCellText(element);
+            final String resolvingCellText = getResolvingCellText(element, file);
+            showConsoleAndExecuteCode(e, resolvingCellText);
             showConsoleAndExecuteCode(e, cellText);
         }
+    }
+
+    @NotNull
+    private String getResolvingCellText(@Nullable PsiElement element, PsiFile file) {
+        if (element != null) {
+            element = CellUtil.getCellStart(element);
+            return new CellReferenceResolver(element, file).getResolvingCode();
+        }
+        return "";
     }
 
     /**
@@ -61,15 +75,20 @@ public class PyExecuteCellAction extends AnAction {
     }
 
     @NotNull
-    private static String getCellText(@NotNull Editor editor, @NotNull PsiFile file) {
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement element = file.findElementAt(offset);
-        element = ObjectUtils.chooseNotNull(element, file.findElementAt(offset - 1));
+    private static String getCellText(@Nullable PsiElement element) {
         if (element != null) {
             element = CellUtil.getCellStart(element);
             return CellUtil.getCodeInCell(element);
         }
         return "";
+    }
+
+    @Nullable
+    private static PsiElement getCaretElement(@NotNull Editor editor, @NotNull PsiFile file) {
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement element = file.findElementAt(offset);
+        element = ObjectUtils.chooseNotNull(element, file.findElementAt(offset - 1));
+        return element;
     }
 
     public void update(AnActionEvent e) {
@@ -79,7 +98,8 @@ public class PyExecuteCellAction extends AnAction {
 
         boolean enabled = false;
         if (editor != null && file != null && isPython(editor)) {
-            String text = getCellText(editor, file);
+            PsiElement element = getCaretElement(editor, file);
+            String text = getCellText(element);
             enabled = !StringUtil.isEmpty(text);
         }
 
