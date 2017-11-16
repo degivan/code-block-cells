@@ -9,10 +9,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -20,7 +16,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
@@ -34,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 public class PyExecuteCellAction extends AnAction {
 
@@ -52,10 +46,7 @@ public class PyExecuteCellAction extends AnAction {
             PsiElement element = getCaretElement(editor, file);
             final String cellText = getCellText(element);
             final String resolvingCellText = getCodeFromDependentCells(element, file);
-            if (!resolvingCellText.isEmpty()) {
-                showConsoleAndExecuteCode(e, resolvingCellText, true);
-            }
-            showConsoleAndExecuteCode(e, cellText, false);
+            showConsoleAndExecuteCode(e, resolvingCellText, cellText);
         }
     }
 
@@ -74,12 +65,12 @@ public class PyExecuteCellAction extends AnAction {
      * @param e        event
      * @param cellText null means that there is no code to execute, only open a console
      */
-    private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String cellText,
-                                                  boolean foldCode) {
+    private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String resolvingCellText,
+                                                  @NotNull final String cellText) {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         Project project = e.getProject();
 
-        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, cellText, editor, foldCode), editor, project);
+        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, resolvingCellText, cellText, editor), editor, project);
     }
 
     @NotNull
@@ -239,33 +230,20 @@ public class PyExecuteCellAction extends AnAction {
         }
     }
 
-    private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text, Editor editor,
-                                         boolean foldCode) {
-        if (foldCode && codeExecutor instanceof PythonConsoleView) {
-            foldExecutedCode((PythonConsoleView) codeExecutor, text);
+    private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String resolvingCellText,
+                                         String cellText, Editor editor) {
+        if (!(resolvingCellText.isEmpty() || !(codeExecutor instanceof PythonConsoleView))) {
+            foldExecutedCode((PythonConsoleView) codeExecutor, resolvingCellText);
+            codeExecutor.executeCode(resolvingCellText, editor);
         }
-        codeExecutor.executeCode(text, editor);
+        codeExecutor.executeCode(cellText, editor);
     }
 
     private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
         Editor consoleEditor = codeExecutor.getEditor();
         Document oldDocument = consoleEditor.getDocument();
-        int expectedLinesAmount = oldDocument.getLineCount() + text.split("\n").length + 2;
-        int oldLength = oldDocument.getTextLength();
-        oldDocument.addDocumentListener(new DocumentListener() {
-            @Override
-            public void documentChanged(DocumentEvent event) {
-                Document document = event.getDocument();
-                FoldingModel foldingModel = consoleEditor.getFoldingModel();
-                int finish = document.getTextLength() - 1;
-                if (expectedLinesAmount <= document.getLineCount()) {
-                    document.removeDocumentListener(this);
-                    foldingModel.runBatchFoldingOperation(() -> {
-                        FoldRegion foldRegion = foldingModel.addFoldRegion(oldLength, finish, "...");
-                        Optional.ofNullable(foldRegion).ifPresent(region -> region.setExpanded(false));
-                    });
-                }
-            }
-        });
+        
+        CellDocumentListener listener = new CellDocumentListener(consoleEditor, oldDocument, text);
+        oldDocument.addDocumentListener(listener);
     }
 }
