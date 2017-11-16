@@ -6,17 +6,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-import java.io.File;
 import java.util.List;
 
-public class CellLineProviderTest extends LightPlatformCodeInsightFixtureTestCase {
+public class CellLineProviderTest extends BaseTestCase {
 
     public void test_pyExtension_noLineMarkerInfo() {
         PsiFile file = myFixture.configureByFile("spam.py");
         CellLineProvider lineProvider = new CellLineProvider();
-        for (PsiElement elem: file.getChildren()) {
+        for (PsiElement elem : file.getChildren()) {
             LineMarkerInfo lineMarkerInfo = lineProvider.getLineMarkerInfo(elem);
             assertNull("Line provider returned not null", lineMarkerInfo);
         }
@@ -36,14 +34,9 @@ public class CellLineProviderTest extends LightPlatformCodeInsightFixtureTestCas
         List<GutterMark> marks = myFixture.findAllGutters();
 
         assertEquals(2, marks.size());
-
-        GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-        AnAction clickAction = mark.getClickAction();
-        assertNotNull(clickAction);
-    }
-
-    @Override
-    protected String getTestDataPath() {
-        return new File("testData").getAbsolutePath();
+        for (GutterMark mark : marks) {
+            AnAction clickAction = ((GutterIconRenderer) mark).getClickAction();
+            assertNotNull(clickAction);
+        }
     }
 }
