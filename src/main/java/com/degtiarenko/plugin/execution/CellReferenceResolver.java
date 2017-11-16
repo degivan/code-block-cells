@@ -30,17 +30,17 @@ public class CellReferenceResolver {
     public String getResolvingCode() {
         List<PyReferenceExpression> references = getReferencesInCell(cellStart);
         while (!references.isEmpty()) {
-            List<PsiElement> cellStarts = findResolvingCells(references);
+            List<PsiElement> cellStarts = findDependentCells(references);
             resolvingCells.addAll(cellStarts);
             references = cellStarts.stream()
                     .flatMap(elem -> getReferencesInCell(elem).stream())
                     .collect(toList());
 
         }
-        return getCodeInResolvingCells(resolvingCells);
+        return getCodeFromCells(resolvingCells);
     }
 
-    private String getCodeInResolvingCells(List<PsiElement> cellStarts) {
+    private String getCodeFromCells(List<PsiElement> cellStarts) {
         cellStarts = cellStarts.stream().distinct().collect(toList());
         cellStarts.sort(Comparator.comparingInt(PsiElement::getTextOffset));
 
@@ -53,7 +53,7 @@ public class CellReferenceResolver {
     }
 
     @NotNull
-    private List<PsiElement> findResolvingCells(@NotNull List<PyReferenceExpression> references) {
+    private List<PsiElement> findDependentCells(@NotNull List<PyReferenceExpression> references) {
         List<PsiElement> elements = resolveReferences(references, file);
         return elements.stream()
                 .filter(Objects::nonNull)

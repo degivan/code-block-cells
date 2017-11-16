@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
@@ -50,7 +51,7 @@ public class PyExecuteCellAction extends AnAction {
         if (editor != null && file != null && CellUtil.isFileOfGoodType(file)) {
             PsiElement element = getCaretElement(editor, file);
             final String cellText = getCellText(element);
-            final String resolvingCellText = getResolvingCellText(element, file);
+            final String resolvingCellText = getCodeFromDependentCells(element, file);
             if (!resolvingCellText.isEmpty()) {
                 showConsoleAndExecuteCode(e, resolvingCellText, true);
             }
@@ -59,7 +60,7 @@ public class PyExecuteCellAction extends AnAction {
     }
 
     @NotNull
-    private String getResolvingCellText(@Nullable PsiElement element, PsiFile file) {
+    private String getCodeFromDependentCells(@Nullable PsiElement element, PsiFile file) {
         if (element != null) {
             element = CellUtil.getCellStart(element);
             return new CellReferenceResolver(element, file).getResolvingCode();
