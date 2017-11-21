@@ -3,11 +3,13 @@ package com.degtiarenko.plugin.execution;
 import com.degtiarenko.plugin.CellUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.pyi.PyiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +23,7 @@ public class CellReferenceResolver {
     private final PsiElement cellStart;
     private final PsiFile file;
     private final List<PsiElement> resolvingCells = new ArrayList<>();
+    private final List<PyReferenceExpression> unresolvedReferences = new ArrayList<>();
 
     public CellReferenceResolver(PsiElement cellStart, @NotNull PsiFile file) {
         this.cellStart = cellStart;
@@ -77,15 +80,14 @@ public class CellReferenceResolver {
     }
 
     @NotNull
-    private static List<PsiElement> resolveReferences(@NotNull List<PyReferenceExpression> references,
+    private  List<PsiElement> resolveReferences(@NotNull List<PyReferenceExpression> references,
                                                       @NotNull PsiFile file) {
         List<PsiElement> result = new ArrayList<>();
-        for (PyReferenceExpression reference : references) {
-            PsiElement resolver = reference.getReference().resolve();
-            if (resolver != null && resolver.getContainingFile().equals(file)) {
-                result.add(resolver);
-            } else {
-                List<ResolveResult> resolvers = Arrays.asList(reference.getReference().multiResolve(false));
+        for (PyReferenceExpression expression : references) {
+            PsiPolyVariantReference reference = expression.getReference();
+            PsiElement resolver = reference.resolve();
+            if (resolver == null || !resolver.getContainingFile().equals(file)) {
+                List<ResolveResult> resolvers = Arrays.asList(reference.multiResolve(false));
                 for (ResolveResult resolveResult : resolvers) {
                     if (resolveResult.isValidResult() && resolveResult instanceof ImportedResolveResult) {
                         final PyImportedNameDefiner definer = ((ImportedResolveResult) resolveResult).getDefiner();
@@ -93,6 +95,8 @@ public class CellReferenceResolver {
                         break;
                     }
                 }
+            } else {
+                result.add(resolver);
             }
         }
         return result;
