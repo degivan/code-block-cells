@@ -4,6 +4,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.List;
 import static com.degtiarenko.plugin.CellUtil.*;
 import static com.intellij.psi.util.PsiTreeUtil.findChildrenOfType;
 import static com.intellij.psi.util.PsiTreeUtil.nextLeaf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CellUtilTest extends BaseTestCase {
 
@@ -55,7 +58,7 @@ public class CellUtilTest extends BaseTestCase {
         PsiElement elem = file.getFirstChild();
         String expectedCode = file.getText().split(BLOCK_CELL_SEPARATOR)[0];
 
-        testGetCodeInCell(elem, expectedCode);
+        testGetCodeInCell(elem, StringUtils.strip(expectedCode));
     }
 
 
@@ -65,7 +68,7 @@ public class CellUtilTest extends BaseTestCase {
                             .getNextSibling();
         String expectedCode = file.getText().split(BLOCK_CELL_SEPARATOR)[1];
 
-        testGetCodeInCell(elem, expectedCode);
+        testGetCodeInCell(elem, StringUtils.strip(expectedCode));
     }
 
     private void testGetCodeInCell(PsiElement startElem, String expectedCode) {

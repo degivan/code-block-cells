@@ -9,6 +9,10 @@ import com.intellij.psi.PsiFile;
 
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 public class CellLineProviderTest extends BaseTestCase {
 
     public void test_pyExtension_noLineMarkerInfo() {

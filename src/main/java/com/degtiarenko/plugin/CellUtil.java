@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyFile;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class CellUtil {
             text.append(element.getText());
             element = element.getNextSibling();
         }
-        return text.toString();
+        return StringUtils.strip(text.toString());
     }
 
     public static boolean isFileOfGoodType(@NotNull PsiFile file) {
