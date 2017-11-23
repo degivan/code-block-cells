@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
-import com.jetbrains.python.pyi.PyiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +27,10 @@ public class CellReferenceResolver {
     public CellReferenceResolver(PsiElement cellStart, @NotNull PsiFile file) {
         this.cellStart = cellStart;
         this.file = file;
+    }
+
+    public List<PyReferenceExpression> getUnresolvedReferences() {
+        return unresolvedReferences;
     }
 
     public String getResolvingCode() {
@@ -80,8 +83,8 @@ public class CellReferenceResolver {
     }
 
     @NotNull
-    private  List<PsiElement> resolveReferences(@NotNull List<PyReferenceExpression> references,
-                                                      @NotNull PsiFile file) {
+    private List<PsiElement> resolveReferences(@NotNull List<PyReferenceExpression> references,
+                                               @NotNull PsiFile file) {
         List<PsiElement> result = new ArrayList<>();
         for (PyReferenceExpression expression : references) {
             PsiPolyVariantReference reference = expression.getReference();
@@ -91,11 +94,16 @@ public class CellReferenceResolver {
                 for (ResolveResult resolveResult : resolvers) {
                     if (resolveResult.isValidResult() && resolveResult instanceof ImportedResolveResult) {
                         final PyImportedNameDefiner definer = ((ImportedResolveResult) resolveResult).getDefiner();
-                        result.add(definer);
+                        if (definer != null) {
+                            resolver = definer;
+                        }
                         break;
                     }
                 }
-            } else {
+            }
+            if (resolver == null) {
+                unresolvedReferences.add(expression);
+            } else if (resolver.getContainingFile().equals(file)) {
                 result.add(resolver);
             }
         }

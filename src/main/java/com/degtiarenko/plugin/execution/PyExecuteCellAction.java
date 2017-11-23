@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -24,11 +25,15 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static java.util.stream.Collectors.joining;
 
 public class PyExecuteCellAction extends AnAction {
 
@@ -45,32 +50,41 @@ public class PyExecuteCellAction extends AnAction {
         if (editor != null && file != null && CellUtil.isFileOfGoodType(file)) {
             PsiElement element = getCaretElement(editor, file);
             final String cellText = getCellText(element);
-            final String resolvingCellText = getCodeFromDependentCells(element, file);
-            showConsoleAndExecuteCode(e, resolvingCellText, cellText);
+            final Pair<String, List<PyReferenceExpression>> dependentCells = getCodeFromDependentCells(element, file);
+            showConsoleAndExecuteCode(e, dependentCells.getFirst(), cellText,
+                    dependentCells.getSecond());
         }
     }
 
     @NotNull
-    private String getCodeFromDependentCells(@Nullable PsiElement element, PsiFile file) {
+    private Pair<String, List<PyReferenceExpression>> getCodeFromDependentCells(@Nullable PsiElement element,
+                                                                                PsiFile file) {
         if (element != null) {
             element = CellUtil.getCellStart(element);
-            return new CellReferenceResolver(element, file).getResolvingCode();
+            CellReferenceResolver referenceResolver = new CellReferenceResolver(element, file);
+            final String resolvingCode = referenceResolver.getResolvingCode();
+            final List<PyReferenceExpression> unresolvedReferences = referenceResolver.getUnresolvedReferences();
+            return new Pair<>(resolvingCode, unresolvedReferences);
         }
-        return "";
+        return new Pair<>("", new ArrayList<>());
     }
 
     /**
      * Finds existing or creates a new console and then executes provided code there.
      *
-     * @param e        event
-     * @param cellText null means that there is no code to execute, only open a console
+     * @param e                    event
+     * @param cellText             null means that there is no code to execute, only open a console
+     * @param unresolvedReferences
      */
     private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String resolvingCellText,
-                                                  @NotNull final String cellText) {
+                                                  @NotNull final String cellText,
+                                                  @NotNull List<PyReferenceExpression> unresolvedReferences) {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         Project project = e.getProject();
 
-        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, resolvingCellText, cellText, editor), editor, project);
+        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, resolvingCellText, cellText, editor,
+                unresolvedReferences),
+                editor, project);
     }
 
     @NotNull
@@ -231,12 +245,36 @@ public class PyExecuteCellAction extends AnAction {
     }
 
     private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String resolvingCellText,
-                                         String cellText, Editor editor) {
-        if (!(resolvingCellText.isEmpty() || !(codeExecutor instanceof PythonConsoleView))) {
-            foldExecutedCode((PythonConsoleView) codeExecutor, resolvingCellText);
-            codeExecutor.executeCode(resolvingCellText, editor);
+                                         @NotNull String cellText, @NotNull Editor editor,
+                                         @NotNull List<PyReferenceExpression> unresolvedReferences) {
+        if (codeExecutor instanceof PythonConsoleView) {
+            if (!resolvingCellText.isEmpty()) {
+                foldExecutedCode((PythonConsoleView) codeExecutor, resolvingCellText);
+                codeExecutor.executeCode(resolvingCellText, editor);
+            }
+            final String warning = getWarning(unresolvedReferences);
+            if (!warning.isEmpty()) {
+                printWarning((PythonConsoleView) codeExecutor, warning);
+            }
         }
         codeExecutor.executeCode(cellText, editor);
+    }
+
+    private static void printWarning(PythonConsoleView codeExecutor, String warning) {
+        final Editor editor = codeExecutor.getEditor();
+        final Document document = editor.getDocument();
+        int finish = document.getTextLength();
+        document.insertString(finish, warning);
+    }
+
+    private static String getWarning(@NotNull List<PyReferenceExpression> unresolvedReferences) {
+        if (unresolvedReferences.isEmpty()) {
+            return "";
+        } else {
+            return unresolvedReferences.stream()
+                    .map(PsiElement::getText)
+                    .collect(joining(", ", "These references are unresolved: ", ".\n"));
+        }
     }
 
     private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
