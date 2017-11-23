@@ -21,6 +21,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.*;
@@ -82,7 +83,7 @@ public class PyExecuteCellAction extends AnAction {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         Project project = e.getProject();
 
-        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, resolvingCellText, cellText, editor,
+        findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, resolvingCellText, cellText,
                 unresolvedReferences),
                 editor, project);
     }
@@ -245,19 +246,24 @@ public class PyExecuteCellAction extends AnAction {
     }
 
     private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String resolvingCellText,
-                                         @NotNull String cellText, @NotNull Editor editor,
+                                         @NotNull String cellText,
                                          @NotNull List<PyReferenceExpression> unresolvedReferences) {
         if (codeExecutor instanceof PythonConsoleView) {
+            PythonConsoleView consoleView = (PythonConsoleView) codeExecutor;
+            PythonConsoleExecuteActionHandler executeActionHandler = consoleView.getExecuteActionHandler();
             if (!resolvingCellText.isEmpty()) {
-                foldExecutedCode((PythonConsoleView) codeExecutor, resolvingCellText);
-                codeExecutor.executeCode(resolvingCellText, editor);
+                foldExecutedCode(consoleView, resolvingCellText);
+                consoleView.executeInConsole(resolvingCellText);
             }
             final String warning = getWarning(unresolvedReferences);
             if (!warning.isEmpty()) {
-                printWarning((PythonConsoleView) codeExecutor, warning);
+                printWarning(consoleView, warning);
             }
+            while (!executeActionHandler.canExecuteNow()) {
+                TimeoutUtil.sleep(300);
+            }
+            consoleView.executeInConsole(cellText);
         }
-        codeExecutor.executeCode(cellText, editor);
     }
 
     private static void printWarning(PythonConsoleView codeExecutor, String warning) {
@@ -280,7 +286,6 @@ public class PyExecuteCellAction extends AnAction {
     private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
         Editor consoleEditor = codeExecutor.getEditor();
         Document oldDocument = consoleEditor.getDocument();
-        
         CellDocumentListener listener = new CellDocumentListener(consoleEditor, oldDocument, text);
         oldDocument.addDocumentListener(listener);
     }
