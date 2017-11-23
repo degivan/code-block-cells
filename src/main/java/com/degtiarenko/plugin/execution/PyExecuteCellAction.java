@@ -7,7 +7,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -21,7 +20,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.*;
@@ -33,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static java.util.stream.Collectors.joining;
 
 public class PyExecuteCellAction extends AnAction {
 
@@ -75,7 +71,7 @@ public class PyExecuteCellAction extends AnAction {
      *
      * @param e                    event
      * @param cellText             null means that there is no code to execute, only open a console
-     * @param unresolvedReferences
+     * @param unresolvedReferences unresolved references in cell
      */
     private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String resolvingCellText,
                                                   @NotNull final String cellText,
@@ -250,43 +246,12 @@ public class PyExecuteCellAction extends AnAction {
                                          @NotNull List<PyReferenceExpression> unresolvedReferences) {
         if (codeExecutor instanceof PythonConsoleView) {
             PythonConsoleView consoleView = (PythonConsoleView) codeExecutor;
-            PythonConsoleExecuteActionHandler executeActionHandler = consoleView.getExecuteActionHandler();
-            if (!resolvingCellText.isEmpty()) {
-                foldExecutedCode(consoleView, resolvingCellText);
-                consoleView.executeInConsole(resolvingCellText);
-            }
-            final String warning = getWarning(unresolvedReferences);
-            if (!warning.isEmpty()) {
-                printWarning(consoleView, warning);
-            }
-            while (!executeActionHandler.canExecuteNow()) {
-                TimeoutUtil.sleep(300);
-            }
-            consoleView.executeInConsole(cellText);
-        }
-    }
-
-    private static void printWarning(PythonConsoleView codeExecutor, String warning) {
-        final Editor editor = codeExecutor.getEditor();
-        final Document document = editor.getDocument();
-        int finish = document.getTextLength();
-        document.insertString(finish, warning);
-    }
-
-    private static String getWarning(@NotNull List<PyReferenceExpression> unresolvedReferences) {
-        if (unresolvedReferences.isEmpty()) {
-            return "";
+            CellExecutionHandler executionHandler = new CellExecutionHandler(consoleView);
+            executionHandler.execute(resolvingCellText, true);
+            executionHandler.execute(cellText, false);
+            executionHandler.printWarning(unresolvedReferences);
         } else {
-            return unresolvedReferences.stream()
-                    .map(PsiElement::getText)
-                    .collect(joining(", ", "These references are unresolved: ", ".\n"));
+            throw new RuntimeException("Wrong code executor type! This shouldn't happen in production.");
         }
-    }
-
-    private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
-        Editor consoleEditor = codeExecutor.getEditor();
-        Document oldDocument = consoleEditor.getDocument();
-        CellDocumentListener listener = new CellDocumentListener(consoleEditor, oldDocument, text);
-        oldDocument.addDocumentListener(listener);
     }
 }
