@@ -249,7 +249,7 @@ public class PyExecuteCellAction extends AnAction {
             CellExecutionHandler executionHandler = new CellExecutionHandler(consoleView);
             executionHandler.execute(resolvingCellText, true);
             executionHandler.execute(cellText, false);
-            executionHandler.printWarning(unresolvedReferences);
+            executionHandler.showWarning(unresolvedReferences);
         } else {
             throw new RuntimeException("Wrong code executor type! This shouldn't happen in production.");
         }

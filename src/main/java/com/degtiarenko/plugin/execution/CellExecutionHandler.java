@@ -1,5 +1,8 @@
 package com.degtiarenko.plugin.execution;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -14,6 +17,8 @@ import java.util.List;
 import static java.util.stream.Collectors.joining;
 
 public class CellExecutionHandler {
+    private static final String DISPLAY_ID = "PyCells plugin";
+
     private final PythonConsoleView consoleView;
     private final PythonConsoleExecuteActionHandler executeActionHandler;
 
@@ -23,7 +28,7 @@ public class CellExecutionHandler {
     }
 
     public void execute(String text, boolean fold) {
-        while (!executeActionHandler.canExecuteNow()) {
+        while (!executeActionHandler.canExecuteNow() || !executeActionHandler.isEnabled()) {
             TimeoutUtil.sleep(300);
         }
         if (!text.isEmpty()) {
@@ -34,13 +39,11 @@ public class CellExecutionHandler {
         }
     }
 
-    public void printWarning(List<PyReferenceExpression> unresolvedReferences) {
+    public void showWarning(List<PyReferenceExpression> unresolvedReferences) {
         if (!unresolvedReferences.isEmpty()) {
             String warning = getWarning(unresolvedReferences);
-            final Editor editor = consoleView.getEditor();
-            final Document document = editor.getDocument();
-            int finish = document.getTextLength();
-            document.insertString(finish, warning);
+            Notifications.Bus.notify(new Notification(DISPLAY_ID,"PyCells plugin: unresolved references",
+                    warning, NotificationType.WARNING), consoleView.getProject());
         }
     }
 
