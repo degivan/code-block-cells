@@ -8,6 +8,9 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -247,9 +250,17 @@ public class PyExecuteCellAction extends AnAction {
         if (codeExecutor instanceof PythonConsoleView) {
             PythonConsoleView consoleView = (PythonConsoleView) codeExecutor;
             CellExecutionHandler executionHandler = new CellExecutionHandler(consoleView);
-            executionHandler.execute(resolvingCellText, true);
-            executionHandler.execute(cellText, false);
-            executionHandler.showWarning(unresolvedReferences);
+            ProgressManager.getInstance().run(new Task.Backgroundable(consoleView.getProject(), "Execute Code in Console",
+                    true) {
+                @Override
+                public void run(@NotNull ProgressIndicator progressIndicator) {
+                    executionHandler.execute(resolvingCellText, true, progressIndicator);
+                    if (!progressIndicator.isCanceled()) {
+                        executionHandler.execute(cellText, false, progressIndicator);
+                        executionHandler.showWarning(unresolvedReferences);
+                    }
+                }
+            });
         } else {
             throw new RuntimeException("Wrong code executor type! This shouldn't happen in production.");
         }
