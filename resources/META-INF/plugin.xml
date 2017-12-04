@@ -34,6 +34,11 @@
     <action id="NewCellFile" class="com.degtiarenko.plugin.type.CreateCcpyFileAction">
       <add-to-group group-id="NewGroup"/>
     </action>
+    <action id="NewCellAction"
+            class="com.degtiarenko.plugin.NewCellAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="PyExecuteCellAction"/>
+      <keyboard-shortcut first-keystroke="alt shift F1" keymap="$default"/>
+    </action>
   </actions>
   <application-components>
 
