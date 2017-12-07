@@ -6,47 +6,44 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.Optional;
 
 public class CellDocumentListener implements DocumentListener {
+    private final int foldStart;
+    private final Editor editor;
+    private int cellCount = 0;
 
-    private final Editor consoleEditor;
-    private int expectedLinesAmount;
-    private int oldLength;
+    private volatile boolean finished = false;
 
-    public CellDocumentListener(Editor consoleEditor, Document oldDocument, String text) {
-        this.consoleEditor = consoleEditor;
-        int codeLineCount = StringUtils.countMatches(text, "\n");
-        this.expectedLinesAmount = oldDocument.getLineCount() + codeLineCount + 2;
-        this.oldLength = oldDocument.getTextLength();
+    public CellDocumentListener(Document document, Editor editor) {
+        this.editor = editor;
+        this.foldStart = document.getTextLength();
     }
 
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-        String output = String.valueOf(event.getNewFragment());
-        if (isStartOutput(output)) {
-            expectedLinesAmount += StringUtils.countMatches(output, "\n");
-            oldLength += output.length();
-        }
-    }
-
-    private boolean isStartOutput(String output) {
-        return output.contains("PyDev console:");
+    public void setFinished(boolean finished) {
+        this.finished = finished;
     }
 
     @Override
     public void documentChanged(DocumentEvent event) {
-        Document document = event.getDocument();
-        FoldingModel foldingModel = consoleEditor.getFoldingModel();
-        int finish = document.getTextLength() - 1;
-        if (this.expectedLinesAmount <= document.getLineCount()) {
+        if (isNewCodeBlock(event)) {
+            cellCount++;
+        }
+        if (finished || cellCount == 2) {
+            Document document = event.getDocument();
             document.removeDocumentListener(this);
+            FoldingModel foldingModel = editor.getFoldingModel();
             foldingModel.runBatchFoldingOperation(() -> {
-                FoldRegion foldRegion = foldingModel.addFoldRegion(oldLength, finish, "...");
-                Optional.ofNullable(foldRegion).ifPresent(region -> region.setExpanded(false));
+                int foldEnd = document.getTextLength() - event.getNewLength() - 1;
+                FoldRegion region = foldingModel.addFoldRegion(foldStart, foldEnd, "...");
+                Optional.ofNullable(region).ifPresent(r -> r.setExpanded(false));
             });
         }
     }
+
+    private boolean isNewCodeBlock(DocumentEvent event) {
+        return event.getNewFragment().toString().startsWith("In[");
+    }
+
 }

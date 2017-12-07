@@ -1,10 +1,10 @@
 package com.degtiarenko.plugin.execution;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.TimeoutUtil;
@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
 
@@ -35,24 +36,43 @@ public class CellExecutionHandler {
         if (!text.isEmpty()) {
             ready = false;
             if (fold) {
-                foldExecutedCode(consoleView, text);
+                CellDocumentListener listener = foldExecutedCode(consoleView, text);
+                executeInConsole(text, progressIndicator);
+                listener.setFinished(true);
+            } else {
+                executeInConsole(text, progressIndicator);
             }
-            consoleView.executeInConsole(text);
-            while (!ready) {
-                if (progressIndicator.isCanceled()) {
-                    consoleCommunication.interrupt();
-                    break;
-                }
-                TimeoutUtil.sleep(300);
+        }
+    }
+
+    private void executeInConsole(String text, ProgressIndicator progressIndicator) {
+        consoleView.executeInConsole(text);
+        while (!ready) {
+            if (progressIndicator.isCanceled()) {
+                consoleCommunication.interrupt();
+                break;
             }
+            TimeoutUtil.sleep(300);
         }
     }
 
     public void showWarning(List<PyReferenceExpression> unresolvedReferences) {
         if (!unresolvedReferences.isEmpty()) {
-            String warning = getWarning(unresolvedReferences);
-            Notifications.Bus.notify(new Notification(DISPLAY_ID, "PyCells plugin: unresolved references",
-                    warning, NotificationType.WARNING), consoleView.getProject());
+            WriteCommandAction.runWriteCommandAction(consoleView.getProject(),
+                    () -> {
+                        String warning = getWarning(unresolvedReferences);
+                        Editor editor = consoleView.getEditor();
+                        Document document = editor.getDocument();
+                        FoldingModel foldingModel = editor.getFoldingModel();
+                        int oldLength = document.getTextLength();
+
+                        document.insertString(oldLength, warning);
+                        foldingModel.runBatchFoldingOperation(() -> {
+                            FoldRegion region = foldingModel.addFoldRegion(oldLength, document.getTextLength() - 1,
+                                    "WARNING: Unresolved references...");
+                            Optional.ofNullable(region).ifPresent(r -> r.setExpanded(false));
+                        });
+                    });
         }
     }
 
@@ -62,11 +82,12 @@ public class CellExecutionHandler {
                 .collect(joining(", ", "These references are unresolved: ", ".\n"));
     }
 
-    private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
+    private CellDocumentListener foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
         Editor consoleEditor = codeExecutor.getEditor();
         Document oldDocument = consoleEditor.getDocument();
-        CellDocumentListener listener = new CellDocumentListener(consoleEditor, oldDocument, text);
+        CellDocumentListener listener = new CellDocumentListener(oldDocument, consoleEditor);
         oldDocument.addDocumentListener(listener);
+        return listener;
     }
 
     private class ExecutionConsoleCommunicationListener implements ConsoleCommunicationListener {
