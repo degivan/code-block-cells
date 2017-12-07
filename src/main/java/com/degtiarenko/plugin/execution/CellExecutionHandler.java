@@ -1,17 +1,17 @@
 package com.degtiarenko.plugin.execution;
 
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.TimeoutUtil;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.Optional;
 import static java.util.stream.Collectors.joining;
 
 public class CellExecutionHandler {
-    private static final String DISPLAY_ID = "PyCells plugin";
+    public static final String UNRESOLVED_REFERENCES_PREFIX = "These references are unresolved: ";
 
     private final PythonConsoleView consoleView;
     private final ConsoleCommunication consoleCommunication;
@@ -36,9 +36,8 @@ public class CellExecutionHandler {
         if (!text.isEmpty()) {
             ready = false;
             if (fold) {
-                CellDocumentListener listener = foldExecutedCode(consoleView, text);
+                foldExecutedCode(consoleView);
                 executeInConsole(text, progressIndicator);
-                listener.setFinished(true);
             } else {
                 executeInConsole(text, progressIndicator);
             }
@@ -47,6 +46,33 @@ public class CellExecutionHandler {
 
     private void executeInConsole(String text, ProgressIndicator progressIndicator) {
         consoleView.executeInConsole(text);
+        sleepTillReadyOrCanceled(progressIndicator);
+    }
+
+    public void showWarning(List<String> unresolvedReferences) {
+        if (!unresolvedReferences.isEmpty()) {
+            String warning = getWarning(unresolvedReferences);
+            Editor editor = consoleView.getEditor();
+            Document document = editor.getDocument();
+            int oldLength = document.getTextLength();
+
+            consoleView.printText(warning, ConsoleViewContentType.LOG_WARNING_OUTPUT);
+            document.addDocumentListener(new DocumentListener() {
+                @Override
+                public void documentChanged(DocumentEvent event) {
+                    document.removeDocumentListener(this);
+                    FoldingModel foldingModel = editor.getFoldingModel();
+                    foldingModel.runBatchFoldingOperation(() -> {
+                        FoldRegion region = foldingModel.addFoldRegion(oldLength, document.getTextLength() - 1,
+                                "WARNING: Unresolved references...");
+                        Optional.ofNullable(region).ifPresent(r -> r.setExpanded(false));
+                    });
+                }
+            });
+        }
+    }
+
+    private void sleepTillReadyOrCanceled(ProgressIndicator progressIndicator) {
         while (!ready) {
             if (progressIndicator.isCanceled()) {
                 consoleCommunication.interrupt();
@@ -56,38 +82,16 @@ public class CellExecutionHandler {
         }
     }
 
-    public void showWarning(List<PyReferenceExpression> unresolvedReferences) {
-        if (!unresolvedReferences.isEmpty()) {
-            WriteCommandAction.runWriteCommandAction(consoleView.getProject(),
-                    () -> {
-                        String warning = getWarning(unresolvedReferences);
-                        Editor editor = consoleView.getEditor();
-                        Document document = editor.getDocument();
-                        FoldingModel foldingModel = editor.getFoldingModel();
-                        int oldLength = document.getTextLength();
-
-                        document.insertString(oldLength, warning);
-                        foldingModel.runBatchFoldingOperation(() -> {
-                            FoldRegion region = foldingModel.addFoldRegion(oldLength, document.getTextLength() - 1,
-                                    "WARNING: Unresolved references...");
-                            Optional.ofNullable(region).ifPresent(r -> r.setExpanded(false));
-                        });
-                    });
-        }
-    }
-
-    private static String getWarning(@NotNull List<PyReferenceExpression> unresolvedReferences) {
+    private static String getWarning(@NotNull List<String> unresolvedReferences) {
         return unresolvedReferences.stream()
-                .map(PsiElement::getText)
-                .collect(joining(", ", "These references are unresolved: ", ".\n"));
+                .collect(joining(", ", UNRESOLVED_REFERENCES_PREFIX, ".\n"));
     }
 
-    private CellDocumentListener foldExecutedCode(@NotNull PythonConsoleView codeExecutor, @NotNull String text) {
+    private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor) {
         Editor consoleEditor = codeExecutor.getEditor();
         Document oldDocument = consoleEditor.getDocument();
         CellDocumentListener listener = new CellDocumentListener(oldDocument, consoleEditor);
         oldDocument.addDocumentListener(listener);
-        return listener;
     }
 
     private class ExecutionConsoleCommunicationListener implements ConsoleCommunicationListener {

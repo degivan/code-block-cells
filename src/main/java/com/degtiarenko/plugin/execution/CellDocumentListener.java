@@ -9,28 +9,26 @@ import com.intellij.openapi.editor.event.DocumentListener;
 
 import java.util.Optional;
 
+import static com.degtiarenko.plugin.execution.CellExecutionHandler.UNRESOLVED_REFERENCES_PREFIX;
+
 public class CellDocumentListener implements DocumentListener {
+    private static final String NEW_EXECUTION_PREFIX = "In[";
+
     private final int foldStart;
     private final Editor editor;
-    private int cellCount = 0;
-
-    private volatile boolean finished = false;
+    private int blockCount = 0;
 
     public CellDocumentListener(Document document, Editor editor) {
         this.editor = editor;
         this.foldStart = document.getTextLength();
     }
 
-    public void setFinished(boolean finished) {
-        this.finished = finished;
-    }
-
     @Override
     public void documentChanged(DocumentEvent event) {
-        if (isNewCodeBlock(event)) {
-            cellCount++;
+        if (isNewBlock(event)) {
+            blockCount++;
         }
-        if (finished || cellCount == 2) {
+        if (blockCount >= 2) {
             Document document = event.getDocument();
             document.removeDocumentListener(this);
             FoldingModel foldingModel = editor.getFoldingModel();
@@ -42,8 +40,9 @@ public class CellDocumentListener implements DocumentListener {
         }
     }
 
-    private boolean isNewCodeBlock(DocumentEvent event) {
-        return event.getNewFragment().toString().startsWith("In[");
+    private boolean isNewBlock(DocumentEvent event) {
+        final String text = event.getNewFragment().toString();
+        return text.startsWith(NEW_EXECUTION_PREFIX) || text.startsWith(UNRESOLVED_REFERENCES_PREFIX);
     }
 
 }
