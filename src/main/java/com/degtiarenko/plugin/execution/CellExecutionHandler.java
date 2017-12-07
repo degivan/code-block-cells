@@ -45,7 +45,6 @@ public class CellExecutionHandler {
                 }
                 TimeoutUtil.sleep(300);
             }
-
         }
     }
 

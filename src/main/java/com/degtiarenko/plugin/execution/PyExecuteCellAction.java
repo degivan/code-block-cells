@@ -39,9 +39,11 @@ public class PyExecuteCellAction extends AnAction {
 
     private static final String EXECUTE_CELL_IN_CONSOLE = "Execute Cell in Console";
     private static final String DESCRIPTION = "Executes selected cell in Python/Django console";
+    private final CellExecutionManager executionManager;
 
     public PyExecuteCellAction() {
         super(EXECUTE_CELL_IN_CONSOLE, DESCRIPTION, null);
+        executionManager = new CellExecutionManager();
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -76,9 +78,9 @@ public class PyExecuteCellAction extends AnAction {
      * @param cellText             null means that there is no code to execute, only open a console
      * @param unresolvedReferences unresolved references in cell
      */
-    private static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String resolvingCellText,
-                                                  @NotNull final String cellText,
-                                                  @NotNull List<PyReferenceExpression> unresolvedReferences) {
+    private void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @NotNull final String resolvingCellText,
+                                           @NotNull final String cellText,
+                                           @NotNull List<PyReferenceExpression> unresolvedReferences) {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         Project project = e.getProject();
 
@@ -244,23 +246,28 @@ public class PyExecuteCellAction extends AnAction {
         }
     }
 
-    private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String resolvingCellText,
-                                         @NotNull String cellText,
-                                         @NotNull List<PyReferenceExpression> unresolvedReferences) {
+    private void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String resolvingCellText,
+                                  @NotNull String cellText,
+                                  @NotNull List<PyReferenceExpression> unresolvedReferences) {
         if (codeExecutor instanceof PythonConsoleView) {
             PythonConsoleView consoleView = (PythonConsoleView) codeExecutor;
-            CellExecutionHandler executionHandler = new CellExecutionHandler(consoleView);
-            ProgressManager.getInstance().run(new Task.Backgroundable(consoleView.getProject(), "Execute Code in Console",
+            CellExecutionHandler executionHandler = executionManager.getHandler(consoleView);
+            if (executionHandler == null) {
+                return;
+            }
+            Task.Backgroundable task = new Task.Backgroundable(consoleView.getProject(), "Execute Code in Console",
                     true) {
                 @Override
                 public void run(@NotNull ProgressIndicator progressIndicator) {
                     executionHandler.execute(resolvingCellText, true, progressIndicator);
                     if (!progressIndicator.isCanceled()) {
-                        executionHandler.execute(cellText, false, progressIndicator);
                         executionHandler.showWarning(unresolvedReferences);
+                        executionHandler.execute(cellText, false, progressIndicator);
                     }
+                    executionManager.freeConsole(consoleView);
                 }
-            });
+            };
+            ProgressManager.getInstance().run(task);
         } else {
             throw new RuntimeException("Wrong code executor type! This shouldn't happen in production.");
         }
