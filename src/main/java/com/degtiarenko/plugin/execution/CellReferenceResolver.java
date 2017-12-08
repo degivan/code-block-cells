@@ -88,23 +88,23 @@ public class CellReferenceResolver {
         List<PsiElement> result = new ArrayList<>();
         for (PyReferenceExpression expression : references) {
             PsiPolyVariantReference reference = expression.getReference();
-            PsiElement resolver = reference.resolve();
-            if (resolver == null || !resolver.getContainingFile().equals(file)) {
-                List<ResolveResult> resolvers = Arrays.asList(reference.multiResolve(false));
-                for (ResolveResult resolveResult : resolvers) {
+            PsiElement target = reference.resolve();
+            if (target == null || !target.getContainingFile().equals(file)) {
+                List<ResolveResult> resolveResults = Arrays.asList(reference.multiResolve(false));
+                for (ResolveResult resolveResult : resolveResults) {
                     if (resolveResult.isValidResult() && resolveResult instanceof ImportedResolveResult) {
                         final PyImportedNameDefiner definer = ((ImportedResolveResult) resolveResult).getDefiner();
                         if (definer != null) {
-                            resolver = definer;
+                            target = definer;
                         }
                         break;
                     }
                 }
             }
-            if (resolver == null) {
+            if (target == null) {
                 unresolvedReferences.add(expression);
-            } else if (resolver.getContainingFile().equals(file)) {
-                result.add(resolver);
+            } else if (target.getContainingFile().equals(file)) {
+                result.add(target);
             }
         }
         return result;

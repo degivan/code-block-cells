@@ -8,6 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import static com.degtiarenko.plugin.CellUtil.isFileOfGoodType;
 
@@ -28,7 +29,7 @@ public class NewCellAction extends AnAction {
         }
     }
 
-    private void addNewCell(Editor editor) {
+    private void addNewCell(@Nullable Editor editor) {
         if (editor != null) {
             Document document = editor.getDocument();
             int end = document.getTextLength();
