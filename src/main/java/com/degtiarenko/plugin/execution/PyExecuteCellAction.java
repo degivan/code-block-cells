@@ -278,10 +278,6 @@ public class PyExecuteCellAction extends AnAction {
                     executionManager.freeConsole(consoleView);
                 }
             };
-//            if (consoleView.getExecuteActionHandler() == null) {
-//                consoleView.executeCode("", null);
-//                TimeoutUtil.sleep(5000);
-//            }
             ProgressManager.getInstance().run(task);
         } else {
             throw new RuntimeException("Wrong code executor type! This shouldn't happen in production.");
