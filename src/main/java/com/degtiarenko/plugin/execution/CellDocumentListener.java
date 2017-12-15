@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.jetbrains.python.console.PyConsoleUtil;
 
 import java.util.Optional;
 
@@ -42,7 +43,8 @@ public class CellDocumentListener implements DocumentListener {
 
     private boolean isNewBlock(DocumentEvent event) {
         final String text = event.getNewFragment().toString();
-        return text.startsWith(NEW_EXECUTION_PREFIX) || text.startsWith(UNRESOLVED_REFERENCES_PREFIX);
+        return text.startsWith(NEW_EXECUTION_PREFIX) || text.startsWith(UNRESOLVED_REFERENCES_PREFIX)
+                    || text.startsWith(PyConsoleUtil.ORDINARY_PROMPT);
     }
 
 }
