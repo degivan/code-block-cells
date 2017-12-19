@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PyExecuteCellAction extends AnAction {
@@ -60,7 +61,7 @@ public class PyExecuteCellAction extends AnAction {
 
     @NotNull
     private Pair<String, List<String>> getCodeFromDependentCells(@Nullable PsiElement element,
-                                                                                PsiFile file) {
+                                                                 PsiFile file) {
         if (element != null) {
             element = CellUtil.getCellStart(element);
             CellReferenceResolver referenceResolver = new CellReferenceResolver(element, file);
@@ -74,7 +75,8 @@ public class PyExecuteCellAction extends AnAction {
 
     /**
      * Finds existing or creates a new console and then executes provided code there.
-     *  @param e                    event
+     *
+     * @param e                    event
      * @param cellText             null means that there is no code to execute, only open a console
      * @param unresolvedReferences unresolved references in cell
      */
@@ -173,21 +175,29 @@ public class PyExecuteCellAction extends AnAction {
     }
 
     private static Collection<RunContentDescriptor> getConsoles(Project project) {
+        Collection<RunContentDescriptor> result;
         PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
         if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
             RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
-            return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.newArrayList();
-        }
-
-        Collection<RunContentDescriptor> descriptors =
-                ExecutionHelper.findRunningConsole(project, dom -> dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom));
-
-        if (descriptors.isEmpty() && toolWindow != null) {
-            return toolWindow.getConsoleContentDescriptors();
+            result = selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.newArrayList();
         } else {
-            return descriptors;
+            Collection<RunContentDescriptor> descriptors =
+                    ExecutionHelper.findRunningConsole(project, dom -> dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom));
+
+            if (descriptors.isEmpty() && toolWindow != null) {
+                result = toolWindow.getConsoleContentDescriptors();
+            } else {
+                result = descriptors;
+            }
         }
+        return filterDescriptors(result);
+    }
+
+    private static List<RunContentDescriptor> filterDescriptors(Collection<RunContentDescriptor> descriptors) {
+        return descriptors.stream()
+                .filter(d -> ((PythonConsoleView) d.getExecutionConsole()).getExecuteActionHandler() != null)
+                .collect(Collectors.toList());
     }
 
     private static boolean isAlive(RunContentDescriptor dom) {
@@ -212,10 +222,11 @@ public class PyExecuteCellAction extends AnAction {
                                      final Consumer<PyCodeExecutor> consumer) {
         final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
-        if (toolWindow != null && toolWindow.getConsoleContentDescriptors().size() > 0) {
+        final List<RunContentDescriptor> descs = Optional.ofNullable(toolWindow)
+                .map(tw -> filterDescriptors(tw.getConsoleContentDescriptors()))
+                .orElseGet(ArrayList::new);
+        if (toolWindow != null && descs.size() > 0) {
             toolWindow.activate(() -> {
-                List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
-
                 RunContentDescriptor descriptor = descs.get(0);
                 if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
                     consumer.consume((PyCodeExecutor) descriptor.getExecutionConsole());
@@ -251,14 +262,14 @@ public class PyExecuteCellAction extends AnAction {
                                   @NotNull List<String> unresolvedReferences) {
         if (codeExecutor instanceof PythonConsoleView) {
             PythonConsoleView consoleView = (PythonConsoleView) codeExecutor;
-            CellExecutionHandler executionHandler = executionManager.getHandler(consoleView);
-            if (executionHandler == null) {
-                return;
-            }
             Task.Backgroundable task = new Task.Backgroundable(consoleView.getProject(), "Execute Code in Console",
                     true) {
                 @Override
                 public void run(@NotNull ProgressIndicator progressIndicator) {
+                    CellExecutionHandler executionHandler = executionManager.getHandler(consoleView);
+                    if (executionHandler == null) {
+                        return;
+                    }
                     executionHandler.execute(resolvingCellText, true, progressIndicator);
                     if (!progressIndicator.isCanceled()) {
                         executionHandler.showWarning(unresolvedReferences);
