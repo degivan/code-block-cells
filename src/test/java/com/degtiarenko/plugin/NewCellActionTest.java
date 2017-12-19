@@ -8,7 +8,7 @@ import org.junit.Assert;
 public class NewCellActionTest extends BaseTestCase {
     private static final String EMPTY_CCPY = "empty.ccpy";
     private static final String NEW_CELL_ACTION_ID = "NewCellAction";
-    public static final String NON_EMPTY_CCPY = "ham_with_comment.ccpy";
+    private static final String NON_EMPTY_CCPY = "ham_with_comment.ccpy";
 
     public void testActionPerformed_emptyFile_cellInTheBeginning() {
         myFixture.configureByFile(EMPTY_CCPY);

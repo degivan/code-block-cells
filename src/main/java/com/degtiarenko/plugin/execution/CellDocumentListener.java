@@ -14,6 +14,7 @@ import static com.degtiarenko.plugin.execution.CellExecutionHandler.UNRESOLVED_R
 
 public class CellDocumentListener implements DocumentListener {
     private static final String NEW_EXECUTION_PREFIX = "In[";
+    public static final String DEPENDENT_CELLS_FOLD = "Dependent cells code";
 
     private final int foldStart;
     private final Editor editor;
@@ -34,8 +35,8 @@ public class CellDocumentListener implements DocumentListener {
             document.removeDocumentListener(this);
             FoldingModel foldingModel = editor.getFoldingModel();
             foldingModel.runBatchFoldingOperation(() -> {
-                int foldEnd = document.getTextLength() - event.getNewLength() - 1;
-                FoldRegion region = foldingModel.addFoldRegion(foldStart, foldEnd, "...");
+                int foldEnd = document.getTextLength() - event.getNewLength() - 1; //offset counts from 0, length from 1
+                FoldRegion region = foldingModel.addFoldRegion(foldStart, foldEnd, DEPENDENT_CELLS_FOLD);
                 Optional.ofNullable(region).ifPresent(r -> r.setExpanded(false));
             });
         }

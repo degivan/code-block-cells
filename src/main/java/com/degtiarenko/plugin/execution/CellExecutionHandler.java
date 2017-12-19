@@ -26,7 +26,7 @@ public class CellExecutionHandler {
     private final ConsoleCommunication consoleCommunication;
     private volatile boolean ready = true;
 
-    public CellExecutionHandler(PythonConsoleView consoleView) {
+    public CellExecutionHandler(@NotNull PythonConsoleView consoleView) {
         this.consoleView = consoleView;
         consoleCommunication = consoleView.getExecuteActionHandler().getConsoleCommunication();
         consoleCommunication.addCommunicationListener(new ExecutionConsoleCommunicationListener());
@@ -49,7 +49,7 @@ public class CellExecutionHandler {
         sleepTillReadyOrCanceled(progressIndicator);
     }
 
-    public void showWarning(List<String> unresolvedReferences) {
+    public void showWarning(@NotNull List<String> unresolvedReferences) {
         if (!unresolvedReferences.isEmpty()) {
             String warning = getWarning(unresolvedReferences);
             Editor editor = consoleView.getEditor();
