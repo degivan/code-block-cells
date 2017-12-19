@@ -53,15 +53,15 @@ public class PyExecuteCellAction extends AnAction {
         if (editor != null && file != null && CellUtil.isFileOfGoodType(file)) {
             PsiElement element = getCaretElement(editor, file);
             final String cellText = getCellText(element);
-            final Pair<String, List<String>> dependentCells = getCodeFromDependentCells(element, file);
-            showConsoleAndExecuteCode(e, dependentCells.getFirst(), cellText,
-                    dependentCells.getSecond());
+            final Pair<String, List<String>> dependentCellsCode = getCodeFromDependentCells(element, file);
+            showConsoleAndExecuteCode(e, dependentCellsCode.getFirst(), cellText,
+                    dependentCellsCode.getSecond());
         }
     }
 
     @NotNull
     private Pair<String, List<String>> getCodeFromDependentCells(@Nullable PsiElement element,
-                                                                 PsiFile file) {
+                                                                 @NotNull PsiFile file) {
         if (element != null) {
             element = CellUtil.getCellStart(element);
             CellReferenceResolver referenceResolver = new CellReferenceResolver(element, file);

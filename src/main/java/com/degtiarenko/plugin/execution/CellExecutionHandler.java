@@ -15,15 +15,18 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
 
 public class CellExecutionHandler {
-    public static final String UNRESOLVED_REFERENCES_PREFIX = "These references are unresolved: ";
+    public static final String UNRESOLVED_REFERENCES_PREFIX = "Unresolved references: ";
 
+    @NotNull
     private final PythonConsoleView consoleView;
+
+    @NotNull
     private final ConsoleCommunication consoleCommunication;
+
     private volatile boolean ready = true;
 
     public CellExecutionHandler(@NotNull PythonConsoleView consoleView) {
@@ -65,7 +68,9 @@ public class CellExecutionHandler {
                     foldingModel.runBatchFoldingOperation(() -> {
                         FoldRegion region = foldingModel.addFoldRegion(oldLength, document.getTextLength() - 1,
                                 "WARNING: Unresolved references...");
-                        Optional.ofNullable(region).ifPresent(r -> r.setExpanded(false));
+                        if (region != null) {
+                            region.setExpanded(false);
+                        }
                     });
                 }
             });
@@ -87,11 +92,9 @@ public class CellExecutionHandler {
                 .collect(joining(", ", UNRESOLVED_REFERENCES_PREFIX, ".\n"));
     }
 
-    private static void foldExecutedCode(@NotNull PythonConsoleView codeExecutor) {
-        Editor consoleEditor = codeExecutor.getEditor();
-        Document oldDocument = consoleEditor.getDocument();
-        CellDocumentListener listener = new CellDocumentListener(oldDocument, consoleEditor);
-        oldDocument.addDocumentListener(listener);
+    private static void foldExecutedCode(@NotNull PythonConsoleView consoleView) {
+        CellDocumentListener listener = new CellDocumentListener(consoleView);
+        consoleView.getEditor().getDocument().addDocumentListener(listener);
     }
 
     private class ExecutionConsoleCommunicationListener implements ConsoleCommunicationListener {
