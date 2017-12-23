@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-import static com.degtiarenko.plugin.CellUtil.BLOCK_CELL_SEPARATOR;
-import static com.degtiarenko.plugin.CellUtil.isFileOfGoodType;
+import static com.degtiarenko.plugin.util.CellUtil.BLOCK_CELL_SEPARATOR;
+import static com.degtiarenko.plugin.util.CellUtil.isFileOfGoodType;
 
 public class CellLineProvider implements LineMarkerProvider {
     private static final String CELL_ACTION_ID = "PyExecuteCellAction";

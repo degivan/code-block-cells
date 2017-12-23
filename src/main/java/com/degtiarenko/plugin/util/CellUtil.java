@@ -1,4 +1,4 @@
-package com.degtiarenko.plugin;
+package com.degtiarenko.plugin.util;
 
 import com.degtiarenko.plugin.type.CellPyFileType;
 import com.intellij.psi.PsiComment;
@@ -40,5 +40,25 @@ public class CellUtil {
 
     public static boolean isFileOfGoodType(@NotNull PsiFile file) {
         return file.getName().endsWith(FILE_EXTENSION);
+    }
+
+    @NotNull
+    public static String getCellText(@Nullable PsiElement element) {
+        if (element != null) {
+            element = CellUtil.getCellStart(element);
+            return CellUtil.getCodeInCell(element);
+        }
+        return "";
+    }
+
+    @Nullable
+    public static PsiElement getCellEnd(@Nullable PsiElement element) {
+        while (element != null && !element.getText().equals(BLOCK_CELL_SEPARATOR)) {
+            element = element.getNextSibling();
+        }
+        if (element != null) {
+            return element.getNode().getTreePrev().getPsi();
+        }
+        return null;
     }
 }

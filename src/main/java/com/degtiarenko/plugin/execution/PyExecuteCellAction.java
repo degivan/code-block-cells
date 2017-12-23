@@ -1,6 +1,6 @@
 package com.degtiarenko.plugin.execution;
 
-import com.degtiarenko.plugin.CellUtil;
+import com.degtiarenko.plugin.util.CellUtil;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.process.ProcessHandler;
@@ -35,6 +35,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.degtiarenko.plugin.util.CellUtil.getCellText;
+import static com.degtiarenko.plugin.util.EditorUtil.getCaretElement;
 
 public class PyExecuteCellAction extends AnAction {
 
@@ -91,22 +94,6 @@ public class PyExecuteCellAction extends AnAction {
                 editor, project);
     }
 
-    @NotNull
-    private static String getCellText(@Nullable PsiElement element) {
-        if (element != null) {
-            element = CellUtil.getCellStart(element);
-            return CellUtil.getCodeInCell(element);
-        }
-        return "";
-    }
-
-    @Nullable
-    private static PsiElement getCaretElement(@NotNull Editor editor, @NotNull PsiFile file) {
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement element = file.findElementAt(offset);
-        element = ObjectUtils.chooseNotNull(element, file.findElementAt(offset - 1));
-        return element;
-    }
 
     public void update(AnActionEvent e) {
         Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());

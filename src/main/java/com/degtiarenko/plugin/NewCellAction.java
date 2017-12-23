@@ -1,5 +1,6 @@
 package com.degtiarenko.plugin;
 
+import com.degtiarenko.plugin.util.CellUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,7 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-import static com.degtiarenko.plugin.CellUtil.isFileOfGoodType;
+import static com.degtiarenko.plugin.util.CellUtil.isFileOfGoodType;
 
 public class NewCellAction extends AnAction {
     private static final String NEW_CELL_FILE_END = CellUtil.BLOCK_CELL_SEPARATOR + "\n";

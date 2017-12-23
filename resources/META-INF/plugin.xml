@@ -26,6 +26,14 @@
     <fileTypeFactory implementation="com.degtiarenko.plugin.type.CellFileTypeFactory"/>
   </extensions>
 
+  <project-components>
+    <component>
+      <interface-class>com.degtiarenko.plugin.highlighting.HighlightListenerProvider</interface-class>
+      <implementation-class>com.degtiarenko.plugin.highlighting.HighlightListenerProvider</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+  </project-components>
+
   <actions>
     <action id="PyExecuteCellAction"
             class="com.degtiarenko.plugin.execution.PyExecuteCellAction">

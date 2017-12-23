@@ -9,7 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.degtiarenko.plugin.CellUtil.*;
+import static com.degtiarenko.plugin.util.CellUtil.*;
 import static com.intellij.psi.util.PsiTreeUtil.findChildrenOfType;
 import static com.intellij.psi.util.PsiTreeUtil.nextLeaf;
 import static org.junit.Assert.assertEquals;

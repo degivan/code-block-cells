@@ -1,6 +1,6 @@
 package com.degtiarenko.plugin.execution;
 
-import com.degtiarenko.plugin.CellUtil;
+import com.degtiarenko.plugin.util.CellUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.degtiarenko.plugin.CellUtil.BLOCK_CELL_SEPARATOR;
-import static com.degtiarenko.plugin.CellUtil.getCodeInCell;
+import static com.degtiarenko.plugin.util.CellUtil.BLOCK_CELL_SEPARATOR;
+import static com.degtiarenko.plugin.util.CellUtil.getCodeInCell;
 import static java.util.stream.Collectors.toList;
 
 public class CellReferenceResolver {

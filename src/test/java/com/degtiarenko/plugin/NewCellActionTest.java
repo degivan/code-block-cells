@@ -1,5 +1,6 @@
 package com.degtiarenko.plugin;
 
+import com.degtiarenko.plugin.util.CellUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
